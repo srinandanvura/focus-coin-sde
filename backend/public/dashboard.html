@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Coin Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 18px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 48px;
+            font-weight: bold;
+            color: #ffd700;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        .stat-subtitle {
+            font-size: 12px;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .sites-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 40px;
+        }
+
+        .sites-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .site-list h3 {
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+
+        .site-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .site-name {
+            font-weight: 500;
+        }
+
+        .site-time {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn.active {
+            background: #4CAF50;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            margin: 40px 0;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            .sites-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🪙 Focus Coin Dashboard</h1>
+            <p id="userGreeting">Loading your productivity insights...</p>
+        </div>
+
+        <div class="controls">
+            <button class="btn active" data-period="7">7 Days</button>
+            <button class="btn" data-period="30">30 Days</button>
+            <button class="btn" data-period="90">90 Days</button>
+        </div>
+
+        <div id="loading" class="loading">
+            Loading your data...
+        </div>
+
+        <div id="dashboard" style="display: none;">
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-value" id="totalCoins">0</span>
+                    <div class="stat-label">Total Focus Coins</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="currentStreak">0</span>
+                    <div class="stat-label">Current Streak</div>
+                    <div class="stat-subtitle">days in a row</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="totalFocusTime">0</span>
+                    <div class="stat-label">Total Focus Time</div>
+                    <div class="stat-subtitle">this period</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="avgFocusTime">0</span>
+                    <div class="stat-label">Daily Average</div>
+                    <div class="stat-subtitle">minutes per day</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-section">
+                <div class="chart-container">
+                    <div class="chart-title">Focus Time Trend</div>
+                    <canvas id="focusChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Coins Balance</div>
+                    <canvas id="coinsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Sites Breakdown -->
+            <div class="sites-section">
+                <h2>Most Visited Sites</h2>
+                <div class="sites-grid">
+                    <div class="site-list">
+                        <h3>🟢 Productive Sites</h3>
+                        <div id="productiveSites">
+                            <div class="loading">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="site-list">
+                        <h3>🔴 Distracting Sites</h3>
+                        <div id="distractingSites">
+                            <div class="loading">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class FocusDashboard {
+            constructor() {
+                this.currentPeriod = 7;
+                this.uuid = null;
+                this.API_BASE = 'http://localhost:3000/api';
+                this.charts = {};
+                
+                this.init();
+            }
+
+            async init() {
+                await this.getUUID();
+                this.bindEvents();
+                await this.loadData();
+            }
+
+            async getUUID() {
+                return new Promise((resolve) => {
+                    chrome.storage.local.get(['focus_uuid'], (result) => {
+                        this.uuid = result.focus_uuid;
+                        resolve();
+                    });
+                });
+            }
+
+            bindEvents() {
+                document.querySelectorAll('.btn[data-period]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentPeriod = parseInt(e.target.dataset.period);
+                        this.loadData();
+                    });
+                });
+            }
+
+            async loadData() {
+                try {
+                    document.getElementById('loading').style.display = 'block';
+                    document.getElementById('dashboard').style.display = 'none';
+
+                    const [todayData, historyData, sitesData] = await Promise.all([
+                        this.fetchData(`/stats/today/${this.uuid}`),
+                        this.fetchData(`/stats/history/${this.uuid}?days=${this.currentPeriod}`),
+                        this.fetchData(`/stats/sites/${this.uuid}?days=${this.currentPeriod}`)
+                    ]);
+
+                    this.updateStats(todayData, historyData);
+                    this.updateCharts(historyData);
+                    this.updateSites(sitesData);
+
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    document.getElementById('loading').textContent = 'Error loading data. Please try again.';
+                }
+            }
+
+            async fetchData(endpoint) {
+                const response = await fetch(`${this.API_BASE}${endpoint}`);
+                if (!response.ok) throw new Error(`API error: ${response.status}`);
+                return await response.json();
+            }
+
+            updateStats(todayData, historyData) {
+                const stats = historyData.summary;
+                const userStats = todayData.userStats;
+
+                document.getElementById('totalCoins').textContent = userStats.totalCoins;
+                document.getElementById('currentStreak').textContent = userStats.currentStreak;
+                document.getElementById('totalFocusTime').textContent = this.formatTime(stats.totalCoinsEarned * 5); // 5 sec per coin
+                document.getElementById('avgFocusTime').textContent = Math.round(stats.avgFocusTime / 60);
+
+                document.getElementById('userGreeting').textContent = 
+                    `Welcome back! You've earned ${todayData.stats.coinsEarned} coins today.`;
+            }
+
+            updateCharts(historyData) {
+                this.createFocusChart(historyData.dailyData);
+                this.createCoinsChart(historyData.dailyData);
+            }
+
+            createFocusChart(dailyData) {
+                const ctx = document.getElementById('focusChart').getContext('2d');
+                
+                if (this.charts.focus) {
+                    this.charts.focus.destroy();
+                }
+
+                this.charts.focus = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dailyData.map(d => new Date(d.date).toLocaleDateString()),
+                        datasets: [{
+                            label: 'Focus Time (minutes)',
+                            data: dailyData.map(d => Math.round(d.stats.totalFocusTime / 60)),
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            createCoinsChart(dailyData) {
+                const ctx = document.getElementById('coinsChart').getContext('2d');
+                
+                if (this.charts.coins) {
+                    this.charts.coins.destroy();
+                }
+
+                this.charts.coins = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: dailyData.map(d => new Date(d.date).toLocaleDateString()),
+                        datasets: [
+                            {
+                                label: 'Coins Earned',
+                                data: dailyData.map(d => d.stats.coinsEarned),
+                                backgroundColor: '#4CAF50'
+                            },
+                            {
+                                label: 'Coins Spent',
+                                data: dailyData.map(d => -d.stats.coinsSpent),
+                                backgroundColor: '#f44336'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: true }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            updateSites(sitesData) {
+                const productiveEl = document.getElementById('productiveSites');
+                const distractingEl = document.getElementById('distractingSites');
+
+                productiveEl.innerHTML = this.renderSiteList(sitesData.productiveSites);
+                distractingEl.innerHTML = this.renderSiteList(sitesData.distractingSites);
+            }
+
+            renderSiteList(sites) {
+                if (!sites.length) {
+                    return '<div class="site-item">No data available</div>';
+                }
+
+                return sites.slice(0, 5).map(site => `
+                    <div class="site-item">
+                        <span class="site-name">${site.site}</span>
+                        <span class="site-time">${this.formatTime(site.totalTime)}</span>
+                    </div>
+                `).join('');
+            }
+
+            formatTime(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                
+                if (hours > 0) {
+                    return `${hours}h ${minutes}m`;
+                }
+                return `${minutes}m`;
+            }
+        }
+
+        // Initialize dashboard when DOM loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new FocusDashboard();
+        });
+    </script>
+</body>
+</html>
